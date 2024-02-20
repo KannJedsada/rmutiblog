@@ -14,10 +14,10 @@ if (isset($_POST['editpost'])) {
     $editPostId = $_POST['editPostId'];
     $pTitle = $_POST['post_title'];
     $pdes = $_POST['post_description'];
-    $pimg = $_FILES['post_img']; 
+    $pimg = $_FILES['post_img'];
 
     $pimg2 = $_POST['img2'];
-    $upload = $_FILES['post_img']['name']; 
+    $upload = $_FILES['post_img']['name'];
 
     if ($upload != '') {
         $allow = array('jpg', 'jpeg', 'png');
@@ -46,16 +46,22 @@ if (isset($_POST['editpost'])) {
     $sql->bindParam(":editPostId", $editPostId);
     $sql->execute();
 
-    $query = "SELECT * FROM posts INNER JOIN users ON posts.users_id = users.user_id ORDER BY posts.date DESC, posts.time DESC";
-    $result = $conn->query($query);
-    $row = $result->fetch(PDO::FETCH_ASSOC);
     if ($sql) {
-        $_SESSION['success'] = "Data has been updated successfully";
-        // header("location: seepost.php?id=" . $row['post_id']);
-        header("location: userindex.php");
+        // Delete the old image file if it exists
+        if ($pimg2 && file_exists("../img/postImg/" . $pimg2)) {
+            unlink("../img/postImg/" . $pimg2);
+        }
+
+        // Redirect based on the referring page
+        if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], "profileuser.php") !== false) {
+            header("location: profileuser.php");
+            exit();
+        } else {
+            header("location: userindex.php");
+            exit();
+        }
     } else {
         $_SESSION['error'] = "Data has not been updated successfully";
         header("location: userindex.php");
     }
 }
-?>

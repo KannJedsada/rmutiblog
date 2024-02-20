@@ -1,7 +1,20 @@
 <?php
 require_once '../security/condb.php';
-$sql = "SELECT * FROM users where role_id = 100";
+$sql = "SELECT u.*, r.*, i.*
+FROM users AS u
+JOIN roleid AS r ON u.role_id = r.role_id
+JOIN isactive AS i ON u.isActive = i.isActiveid
+WHERE u.role_id = 100
+";
 $result = $conn->query($sql);
+
+
+session_start();
+if (!isset($_SESSION['admin_login'])) {
+    $_SESSION['error'] = 'กรุณาเข้าสู่ระบบ!';
+    header('location: ../frm/frm_login.php');
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -9,13 +22,39 @@ $result = $conn->query($sql);
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+    <link rel="stylesheet" href="../assets/plugins/fontawesome-free/css/all.min.css">
     <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
     <link rel="stylesheet" href="../style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User details</title>
     <style>
+        #popup {
+            width: 50%;
+            position: relative;
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+        }
+
+        #popup-close {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 10px;
+            cursor: pointer;
+        }
+
         #myTable thead th {
             background-color: orange;
             color: white;
@@ -23,49 +62,74 @@ $result = $conn->query($sql);
             text-align: center;
         }
 
-        #myTable tbody tr {
-            background-color: #FFEB3B;
-        }
-
         #myTable tbody td {
-            width: 50px;
+            width: auto;
             text-align: center;
         }
 
-        a {
-            margin: 10px;
-        }
-
-        .dataTables_filter {
-            margin-bottom: 10px;
-        }
-
-        .popup {
+        .adduser {
             display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
         }
     </style>
-
-    <title>User</title>
 </head>
 
 <body>
-    <div class="container pt-5 w-80">
+    <?php if (isset($_SESSION['error'])) { ?>
+        <div class="alert alert-danger" role="alert">
+            <?php
+            if (is_array($_SESSION['error'])) {
+                foreach ($_SESSION['error'] as $error) {
+                    echo $error . "<br>";
+                }
+            } else {
+                echo $_SESSION['error'];
+            }
+            unset($_SESSION['error']);
+            ?>
+        </div>
+    <?php }  ?>
+
+    <div class=" container pt-5 w-80">
         <div style="display: flex; align-items: center; justify-content: space-between;">
             <h1>User details</h1>
-            <a style="color: orange;" href="./adminindex.php">
-                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
-                    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z" />
-                </svg>
-            </a>
+            <div>
+                <a class="text-success" href="#" style="text-decoration: none;" id="adduser" onclick="showPopup()">
+                    <svg xmlns=" http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M14 14.252V16.3414C13.3744 16.1203 12.7013 16 12 16C8.68629 16 6 18.6863 6 22H4C4 17.5817 7.58172 14 12 14C12.6906 14 13.3608 14.0875 14 14.252ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13ZM12 11C14.21 11 16 9.21 16 7C16 4.79 14.21 3 12 3C9.79 3 8 4.79 8 7C8 9.21 9.79 11 12 11ZM18 17V14H20V17H23V19H20V22H18V19H15V17H18Z"></path>
+                    </svg>
+                </a>
+                <div id="popup">
+                    <h1>Adduser</h1>
+                    <span id="popup-close" onclick="hidePopup()">&times;</span>
+                    <div>
+                        <a href="#" id="adduser1" onclick="toggleForm('addUserForm')">Add 1 users</a>
+                        <form class="adduser" id="addUserForm" action="adduser.php" method="post" style="display: none;">
+                            <label for="" class="input-group">Username</label>
+                            <input type="text" class="input-group" name="username" required>
+                            <label for="" class="input-group">Email</label>
+                            <input type="email" class="input-group" name="email" required>
+                            <label for="" class="input-group">Password</label>
+                            <input type="password" class="input-group" name="password" required>
+                            <br>
+                            <button type="submit" name="adduser" class="btn btn-success">Add</button>
+                        </form>
+                    </div>
+                    <div>
+                        <a href="#" onclick="toggleForm('fileUploadContainer')">Import from excel</a>
+                        <form class="adduser" id="fileUploadContainer" action="adduser.php" method="post" enctype="multipart/form-data" style="display: none;">
+                            <input type="file" name="file" id="file" class="file" accept=".csv,.xls,.xlsx">
+                            <button type="submit" class="btn btn-success" name="import">Import</button>
+                        </form>
+                    </div>
 
+                </div>
+
+                <a style="color: orange;" href="./adminindex.php">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
+                        <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z" />
+                    </svg>
+                </a>
+            </div>
         </div>
         <table id="myTable" class="table table-striped">
             <thead>
@@ -85,8 +149,8 @@ $result = $conn->query($sql);
                         <td><?php echo $count; ?></td>
                         <td><?php echo $row['user_id']; ?></td>
                         <td><?php echo $row['username']; ?></td>
-                        <td><?php echo $row['role_id']; ?></td>
-                        <td><?php echo $row['isActive']; ?></td>
+                        <td><?php echo $row['role_status']; ?></td>
+                        <td><?php echo $row['status']; ?></td>
                         <td>
                             <div>
                                 <a id="popupButton" class="text-warning" onclick="openModal('editModal_<?php echo $row['user_id']; ?>')">
@@ -124,13 +188,34 @@ $result = $conn->query($sql);
                                                 </div>
                                                 <div>
                                                     <label for="role_id" style="font-family: Montserrat, sans-serif">Role id</label>
-                                                    <input type="text" name="role_id" class="input-group" value="<?php echo $data['role_id']; ?>" required>
+                                                    <?php
+                                                    $role = $conn->prepare("SELECT * FROM roleid");
+                                                    $role->execute();
+                                                    ?>
+                                                    <select name="roleid" class="form-select" required>
+                                                        <?php
+                                                        while ($datarole = $role->fetch(PDO::FETCH_ASSOC)) {
+                                                            if ($datarole['role_id'] != 999) {
+                                                                $selected = ($datarole['role_id'] == $data['role_id']) ? 'selected' : '';
+                                                                echo '<option value="' . $datarole['role_id'] . '" ' . $selected . '>' . $datarole['role_status'] . '</option>';
+                                                            }
+                                                        }
+                                                        ?>
+                                                    </select>
                                                 </div>
                                                 <div>
                                                     <label for="isActive" style="font-family: Montserrat, sans-serif">Is Active</label>
+                                                    <?php
+                                                    $isactive = $conn->prepare("SELECT * FROM isactive");
+                                                    $isactive->execute();
+                                                    ?>
                                                     <select name="isActive" class="form-select" required>
-                                                        <option value="1" <?php echo ($data['isActive'] == 1) ? 'selected' : ''; ?>>1</option>
-                                                        <option value="0" <?php echo ($data['isActive'] == 0) ? 'selected' : ''; ?>>0</option>
+                                                        <?php
+                                                        while ($dataactive = $isactive->fetch(PDO::FETCH_ASSOC)) {
+                                                            $selected = ($dataactive['isActiveid'] == $data['isActive']) ? 'selected' : '';
+                                                            echo '<option value="' . $dataactive['isActiveid'] . '" ' . $selected . '>' . $dataactive['status'] . '</option>';
+                                                        }
+                                                        ?>
                                                     </select>
                                                 </div>
                                             </div>
@@ -154,21 +239,66 @@ $result = $conn->query($sql);
             </tbody>
         </table>
     </div>
-    <script>
-        $(document).ready(function() {
-            $('#myTable').DataTable();
-        });
+</body>
 
-        function confirmDelete(userId) {
+<script>
+    $(document).ready(function() {
+        $('#myTable').DataTable();
+    });
+
+    function confirmDelete(userId) {
         var result = confirm("จะลบจริงอ๊ะป่าว?");
         if (result) {
             window.location.href = "deleteuser.php?id=" + userId;
         }
     }
-    </script>
-    <script src="../script.js"></script>
-    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-</body>
+
+    function showPopup() {
+        var popup = document.getElementById("popup");
+        popup.style.display = "block";
+    }
+
+    function hidePopup() {
+        var popup = document.getElementById("popup");
+        popup.style.display = "none";
+    }
+
+    function toggleForm(formId) {
+        var form = document.getElementById(formId);
+        if (form.classList.contains('adduser')) {
+            form.classList.toggle('adduser');
+        } else {
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+            }
+        }
+    }
+
+    function confirmDelete(userId) {
+        var result = confirm("จะลบจริงอ๊ะป่าว?");
+        if (result) {
+            window.location.href = "deleteuser.php?id=" + userId;
+        }
+    }
+
+    function openModal(modalId) {
+        var modal = document.getElementById(modalId);
+        modal.style.display = "block";
+
+        // Add an event listener to close the modal if clicked outside its content
+        window.addEventListener("click", function(event) {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+    }
+
+    function closeModal(modalId) {
+        var modal = document.getElementById(modalId);
+        modal.style.display = "none";
+    }
+</script>
 
 </html>

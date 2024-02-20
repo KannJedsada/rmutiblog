@@ -39,22 +39,25 @@ if (isset($_GET['id'])) {
     ?>
     <div class="nav-container">
         <div class="logo"><a href="./userindex.php">RMUTI</a></div>
-        <div class="clear-input-container">
-            <input class="clear-input" type="text">
-            <button class="clear-input-button" aria-label="Clear input" title="Clear input">×</button>
-            <a href=""><i class="fas fa-search"></i></a>
+        <div>
+            <form action="search.php" method="get" class="clear-input-container">
+                <input class="clear-input" type="text" name="search"> <!-- Corrected name attribute -->
+                <button class="clear-input-button" aria-label="Clear input" title="Clear input">×</button>
+                <button type="submit" class="clear-search"><i class="fas fa-search"></i></button>
+            </form>
         </div>
         <div class="dropdown">
-            <button onclick="myFunction()" class="dropbtn">
-                <?php if (!empty($row['user_profile'])) { ?>
-                    <img src="<?php echo $row['user_profile']; ?>" alt="User Profile">
+            <button onclick="toggleDropdown('myDropdown')" class="dropbtn">
+                <?php if (!empty($row['profile_img'])) { ?>
+                    <img src="../img/profile/<?php echo $row['profile_img']; ?>" alt="User Profile">
                 <?php } else { ?>
                     <img src="../img/profile/profile-icon-png-910.png" alt="Default Profile Image">
                 <?php } ?>
-                &nbsp; <?php echo $row['username'] ?></button>
-            <div id="myDropdown" class="dropdown-content">
+                &nbsp; <?php echo $row['username'] ?>
+            </button>
+            <div id="myDropdown" class="dropdown-content1">
                 <a href="./profileuser.php?id=<?php echo $row['user_id']; ?>" name="user">Profile</a>
-                <a href="../security/logout.php">Logout</a>
+                <a href="../security/logout.php" style="color: red;">Logout</a>
             </div>
         </div>
     </div>
@@ -93,13 +96,15 @@ if (isset($_GET['id'])) {
                                             </div>
                                             <textarea class="form-control" rows="5" id="comment" name="post_description"><?php echo $data['post_description']; ?></textarea>
                                             <div>
-                                                <label for="postImg" style="font-family: Montserrat, sans-serif">Image</label>
-                                                <input name="post_img" id="post_img" type="file" onchange="previewFile()">
-                                                <?php if (!empty($rowpost['post_img'])) : ?>
-                                                    <img id="preview" src="../img/postImg/<?php echo $rowpost['post_img']; ?>" alt="Post Image" style="max-width: 30%; margin: auto;">
-                                                <?php else : ?>
-                                                    <img id="preview" src="#" alt="Post Image Preview" style="max-width: 30%; display: none; margin: auto;">
-                                                <?php endif; ?>
+                                                <div>
+                                                    <label for="postImg" style="font-family: Montserrat, sans-serif">Image</label>
+                                                    <input name="post_img" id="post_img" type="file" onchange="previewFile('post_img', 'post_preview')">
+                                                    <?php if (!empty($rowpost['post_img'])) : ?>
+                                                        <img id="post_preview" src="../img/postImg/<?php echo $rowpost['post_img']; ?>" alt="Post Image" style="max-width: 30%; margin: auto;">
+                                                    <?php else : ?>
+                                                        <img id="post_preview" src="#" alt="Post Image Preview" style="max-width: 30%; display: none; margin: auto;">
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
                                         </div>
                                         <button type="submit" name="editpost" class="btn" style="background-color: orange; color: white; transition: background-color 0.3s, color 0.3s;" onmouseover="this.style.backgroundColor='darkorange'; this.style.color='white'" onmouseout="this.style.backgroundColor='orange'; this.style.color='white'">
@@ -132,15 +137,17 @@ if (isset($_GET['id'])) {
         </div>
         <div>
             <div id="comment-section">
+                <?php if ($row['isActive'] == 1) {?>
                 <form action="comment.php" method="POST" enctype="multipart/form-data">
                     <div class="insertcomment">
                         <input type="hidden" name="comment_in" value="<?php echo $rowpost['post_id']; ?>">
                         <textarea name="comment_desc" id="" cols="50" rows="1"></textarea>
                         <input name="comment_img" id="postImg" type="file" onchange="previewImage()" accept="image/*">
                         <img id="previewImg" src="#" alt="Preview" style="max-width: 30%; display: none; margin: auto;">
-                        <button type="submit" name='comment'><i class="fas fa-caret-right"></i></button>
+                        <button type="submit" name='comment' ><i class="fas fa-caret-right"></i></button>
                     </div>
                 </form>
+                <?php } ?>
                 <?php
                 $query = "SELECT comments.* , users.username
                             FROM posts
@@ -153,7 +160,7 @@ if (isset($_GET['id'])) {
                 ?>
                 <?php while ($rowcomment = $stmtc->fetch(PDO::FETCH_ASSOC)) { ?>
                     <div class="comment">
-                        <div>
+                        <div style="display: flex; justify-content: space-between;">
                             <div>
                                 <?php echo $rowcomment['username']; ?>
                                 <div><?php echo date('d/m/Y', strtotime($rowcomment['date'])) . ', ' . date('H:i', strtotime($rowcomment['time'])); ?></div>
@@ -180,12 +187,12 @@ if (isset($_GET['id'])) {
                                                     <div class="form-group">
                                                         <textarea class="form-control" rows="5" id="comment" name="comment_desc"><?php echo $datac['comment_desc']; ?></textarea>
                                                         <div>
-                                                            <label for="postImg" style="font-family: Montserrat, sans-serif">Image</label>
-                                                            <input name="comment_img" id="post_img" type="file" onchange="previewFile()">
+                                                            <label for="commentImg" style="font-family: Montserrat, sans-serif">Image</label>
+                                                            <input name="comment_img" id="comment_img" type="file" onchange="previewFile('comment_img', 'comment_preview')">
                                                             <?php if (!empty($rowcomment['comment_img'])) : ?>
-                                                                <img id="preview" src="../img/commentImg/<?php echo $rowcomment['comment_img']; ?>" alt="Post Image" style="max-width: 30%; margin: auto;">
+                                                                <img id="comment_preview" src="../img/commentImg/<?php echo $rowcomment['comment_img']; ?>" alt="Comment Image" style="max-width: 30%; margin: auto;">
                                                             <?php else : ?>
-                                                                <img id="preview" src="#" alt="Post Image Preview" style="max-width: 30%; display: none; margin: auto;">
+                                                                <img id="comment_preview" src="#" alt="Comment Image Preview" style="max-width: 30%; display: none; margin: auto;">
                                                             <?php endif; ?>
                                                         </div>
                                                     </div>
@@ -197,6 +204,7 @@ if (isset($_GET['id'])) {
                                         </div>
                                         <form action="deletecomment.php" method="POST" style="display: inline;">
                                             <input type="hidden" name="commentin" value="<?php echo $rowcomment['comment_id']; ?>">
+                                            <input type="hidden" name="postid" value="<?php echo $rowpost['post_id'];?>"> 
                                             <button type="submit" class="btn btn-danger" name="detelecomment" onclick="return confirm('จะลบจริงป่าว?');">Delete</button>
                                         </form>
                                     </div>
@@ -214,19 +222,17 @@ if (isset($_GET['id'])) {
 
         <script src="../script.js"></script>
         <script>
-            function previewFile() {
-                var preview = document.getElementById('preview');
-                var fileInput = document.getElementById('post_img');
+            function previewFile(inputId, imageId) {
+                var preview = document.getElementById(imageId);
+                var fileInput = document.getElementById(inputId);
                 var file = fileInput.files[0];
 
                 if (file) {
                     var reader = new FileReader();
-
                     reader.onload = function(e) {
                         preview.src = e.target.result;
                         preview.style.display = 'block';
                     }
-
                     reader.readAsDataURL(file);
                 }
             }

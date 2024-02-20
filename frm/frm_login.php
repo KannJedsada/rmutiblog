@@ -25,14 +25,29 @@
 </head>
 
 <body class="loginfrm">
+
     <div class="card">
         <div class="card-header">
             <div>
                 <h3>Login</h3>
             </div>
         </div>
+        <?php if (isset($_SESSION['error'])) { ?>
+            <div class="alert alert-danger" role="alert">
+                <?php
+                if (is_array($_SESSION['error'])) {
+                    foreach ($_SESSION['error'] as $error) {
+                        echo $error;
+                    }
+                } else {
+                    echo $_SESSION['error'];
+                }
+                unset($_SESSION['error']);
+                ?>
+            </div>
+        <?php }  ?>
         <form action="login.php" method="POST">
-            
+
             <div class="card-body">
                 <div class="form-group">
                     <label for="Username">Username</label>

@@ -16,34 +16,33 @@ if (isset($_POST['editprofile'])) {
     $c_password = $_POST['c_password'];
 
     // Handle profile image upload
-    $profile = $_FILES['profile_img'];
-    $profile2 = $_POST['oldimg'];
-    $upload = $profile['name'];
+    // $profile = $_FILES['profile_img'];
+    // $profile2 = $_POST['oldimg'];
+    // $upload = $profile['name'];
 
-    if ($upload != '') {
-        $allow = array('jpg', 'jpeg', 'png');
-        $extension = explode('.', $profile['name']);
-        $fileActExt = strtolower(end($extension));
-        $fileNew = rand() . "." . $fileActExt;
-        $filePath = '../img/profile/' . $fileNew;
+    // if ($upload != '') {
+    //     $allow = array('jpg', 'jpeg', 'png');
+    //     $extension = explode('.', $profile['name']);
+    //     $fileActExt = strtolower(end($extension));
+    //     $fileNew = rand() . "." . $fileActExt;
+    //     $filePath = '../img/profile/' . $fileNew;
 
-        if ($profile['error'] !== UPLOAD_ERR_OK) {
-            die("File upload failed with error code {$profile['error']}");
-        }
+    //     if ($profile['error'] !== UPLOAD_ERR_OK) {
+    //         die("File upload failed with error code {$profile['error']}");
+    //     }
 
-        if (in_array($fileActExt, $allow)) {
-            if ($profile['size'] > 0 && $profile['error'] == 0) {
-                move_uploaded_file($profile['tmp_name'], $filePath);
+    //     if (in_array($fileActExt, $allow)) {
+    //         if ($profile['size'] > 0 && $profile['error'] == 0) {
+    //             move_uploaded_file($profile['tmp_name'], $filePath);
 
-                // Remove old profile image
-                if ($profile2 != '' && file_exists('../img/profile/' . $profile2)) {
-                    unlink('../img/profile/' . $profile2);
-                }
-            }
-        }
-    } else {
-        $fileNew = $profile2;
-    }
+    //             if   ($profile2 != '' && file_exists('../img/profile/' . $profile2)) {
+    //                 unlink('../img/profile/' . $profile2);
+    //             }
+    //         }
+    //     }
+    // } else {
+    //     $fileNew = $profile2;
+    // }
 
     // Check if the user is updating their own profile
     if ($_SESSION['user_login'] == $userId) {
@@ -58,9 +57,9 @@ if (isset($_POST['editprofile'])) {
             echo "alert('Username already exists. Please choose a different username.');";
         } else {
             // Update with username and profile image
-            $sql = $conn->prepare("UPDATE users SET username = :username, email = :email, password = :password, profile_img = :profile WHERE user_id = :userId");
+            $sql = $conn->prepare("UPDATE users SET username = :username, email = :email, password = :password WHERE user_id = :userId");
             $sql->bindParam(":username", $username);
-            $sql->bindParam(":profile", $fileNew);
+            // $sql->bindParam(":profile", $fileNew);
             $sql->bindParam(":email", $email);
             $sql->bindParam(":password", $password);
             $sql->bindParam(":userId", $userId);
@@ -85,4 +84,3 @@ if (isset($_POST['editprofile'])) {
         header("location:  profileuser.php?id=" . $row['user_id']);
     }
 }
-?>

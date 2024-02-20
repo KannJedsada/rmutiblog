@@ -21,7 +21,6 @@ if (isset($_POST['signin'])) {
         header("location: ./frm_login.php");
     } else {
         try {
-
             $check_data = $conn->prepare("SELECT * FROM users WHERE username = :username");
             $check_data->bindParam(":username", $uname);
             $check_data->execute();
@@ -30,7 +29,7 @@ if (isset($_POST['signin'])) {
             if ($check_data->rowCount() > 0) {
                 if ($uname == $row['username']) {
                     if ($password == $row['password']) {
-                        if ($row['role_id'] == 900) {
+                        if ($row['role_id'] == 900 or $row['role_id'] == 999) {
                             $_SESSION['admin_login'] = $row['user_id'];
                             header('location: ../admin/adminindex.php');
                         } else {

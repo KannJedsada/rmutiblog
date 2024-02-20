@@ -15,9 +15,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // รับค่าจากฟอร์ม
         $username = $_POST['username'];
         $email = $_POST['email'];
-        $role_id = $_POST['role_id'];
+        $role_id = $_POST['roleid'];
         $isActive = $_POST['isActive'];
 
+        echo $username. ' ' .$role_id . ' ' . $isActive;
         // อัปเดตข้อมูลในฐานข้อมูล
         $stmt_update = $conn->prepare("UPDATE users SET username = :username, email = :email, role_id = :role_id, isActive = :isActive WHERE user_id = :editprofileId");
         $stmt_update->bindParam(":username", $username);

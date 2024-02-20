@@ -5,20 +5,40 @@ require_once '../security/condb.php';
 
 if (isset($_POST['commentin'])) {
     $cid = $_POST['commentin'];
+    $pid = $_POST['postid']; // Add missing semicolon here
 
-    // echo $cid;
-    $delete_query = "DELETE FROM comments WHERE comment_id = :cid";
-    $delete_statement = $conn->prepare($delete_query);
-    $delete_statement->bindParam(':cid', $cid);
-    $delete_statement->execute();
-}
-$query = "SELECT * FROM posts INNER JOIN users ON posts.users_id = users.user_id ORDER BY posts.date DESC, posts.time DESC";
-$result = $conn->query($query);
-$row = $result->fetch(PDO::FETCH_ASSOC);
-if ($delete_query) {
-    $_SESSION['success'] = "Data has been updated successfully";
-    header("location: seepost.php?id=" . $row['post_id']);
+    try {
+        // Fetch the image filename associated with the comment
+        $fetch_image_query = "SELECT comment_img FROM comments WHERE comment_id = :cid";
+        $fetch_image_statement = $conn->prepare($fetch_image_query);
+        $fetch_image_statement->bindParam(':cid', $cid);
+        $fetch_image_statement->execute();
+        $image_filename = $fetch_image_statement->fetchColumn();
+
+        // Delete the comment from the database
+        $delete_query = "DELETE FROM comments WHERE comment_id = :cid";
+        $delete_statement = $conn->prepare($delete_query);
+        $delete_statement->bindParam(':cid', $cid);
+        $delete_statement->execute();
+
+        // Delete the associated image file
+        if ($image_filename && file_exists("../img/commentImg/" . $image_filename)) {
+            unlink("../img/commentImg/" . $image_filename);
+        }
+
+        // Redirect to the appropriate page after successful deletion
+        $_SESSION['success'] = "Comment and associated image deleted successfully";
+        header("location: seepost.php?id=" . $pid);
+        exit();
+    } catch (PDOException $e) {
+        // Handle any errors that occur during the deletion process
+        $_SESSION['error'] = "Error deleting comment: " . $e->getMessage();
+        header("location: userindex.php");
+        exit();
+    }
 } else {
-    $_SESSION['error'] = "Data has not been updated successfully";
-    // header("location: userindex.php");
+    $_SESSION['error'] = "Invalid request";
+    header("location: userindex.php");
+    exit();
 }
+?>

@@ -1,6 +1,21 @@
 $(document).ready(function () {
   function checkUsername() {
-    var username = $("#username").val();
+    var username = $("#username").val().trim();
+
+    if (username === "") {
+      $("#username-error").text("Username cannot be empty");
+      return;
+    }
+
+    if (username.indexOf(" ") >= 0) {
+      $("#username-error").text("Username cannot contain spaces");
+      return;
+    }
+
+    if (/^\d/.test(username)) {
+      $("#username-error").text("Username cannot contain numbers");
+      return;
+    }
     $.ajax({
       type: "POST",
       url: "check.php",
@@ -18,7 +33,19 @@ $(document).ready(function () {
   }
 
   function checkEmail() {
-    var email = $("#email").val();
+    var email = $("#email").val().trim();
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // regex สำหรับตรวจสอบรูปแบบอีเมล
+
+    if (email === "") {
+      $("#email-error").text("Email cannot be empty");
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      $("#email-error").text("Invalid email format");
+      return;
+    }
+
     $.ajax({
       type: "POST",
       url: "check.php",
@@ -33,11 +60,19 @@ $(document).ready(function () {
         }
       },
     });
-  }
+  } 
 
   function checkPassword() {
     var password = $("#passwordInput").val();
-    var confirmPassword = $("#confirmPasswordInput").val();
+    var confirmPassword = $("#confirmPasswordInput").val().trim();
+    if (password === "") {
+      $("#password-error").text("Password cannot be empty");
+      return;
+    }
+    if (password.indexOf(" ") >= 0) {
+      $("#password-error").text("Password cannot contain spaces");
+      return;
+    }
 
     if (password.length < 5 || password.length > 20) {
       $("#password-error").text("Password must be between 5 and 20 characters");
@@ -62,7 +97,7 @@ $(document).ready(function () {
   $("#confirmPasswordInput").on("blur", function () {
     checkPassword();
   });
-  
+
   $("button[name='signup']").on("click", function (event) {
     // Check if there are any error messages present
     if (
@@ -71,7 +106,7 @@ $(document).ready(function () {
       $("#password-error").text() !== "" ||
       $("#confirmPassword-error").text() !== ""
     ) {
-      event.preventDefault(); 
+      event.preventDefault(); // Prevent form submission
       alert("Please fix the errors before registering.");
     }
   });

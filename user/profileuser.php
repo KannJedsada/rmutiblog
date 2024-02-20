@@ -30,7 +30,16 @@ if (isset($_SESSION['user_login'])) {
     <link rel="stylesheet" href="../assets/plugins/fontawesome-free/css/all.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="../assets/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10">
     <title><?php echo $rowuser['username']; ?></title>
+    <style>
+        #avatar {
+            width: 50%;
+            border-radius: 0px;
+            height: auto;
+            margin: auto;
+        }
+    </style>
 </head>
 
 <body>
@@ -44,16 +53,17 @@ if (isset($_SESSION['user_login'])) {
             </form>
         </div>
         <div class="dropdown">
-            <button onclick="myFunction()" class="dropbtn">
+            <button onclick="toggleDropdown('myDropdown')" class="dropbtn">
                 <?php if (!empty($rowuser['profile_img'])) { ?>
                     <img src="../img/profile/<?php echo $rowuser['profile_img']; ?>" alt="User Profile">
                 <?php } else { ?>
                     <img src="../img/profile/profile-icon-png-910.png" alt="Default Profile Image">
                 <?php } ?>
-                &nbsp; <?php echo $rowuser['username'] ?></button>
-            <div id="myDropdown" class="dropdown-content">
+                &nbsp; <?php echo $rowuser['username'] ?>
+            </button>
+            <div id="myDropdown" class="dropdown-content1">
                 <a href="./profileuser.php?id=<?php echo $rowuser['user_id']; ?>" name="user">Profile</a>
-                <a href="../security/logout.php">Logout</a>
+                <a href="javascript:void(0);" onclick="showConfirmation();" style="color: red;">Logout</a>
             </div>
         </div>
     </div>
@@ -61,18 +71,55 @@ if (isset($_SESSION['user_login'])) {
         <div class="uname">
             <div class="showusername">
                 <div class="myself">
-                    <?php if (!empty($rowuser['profile_img'])) { ?>
-                        <img src="../img/profile/<?php echo $rowuser['profile_img']; ?>" alt="User Profile" style="max-width: 100px;">
-                    <?php } else { ?>
-                        <img src="../img/profile/profile-icon-png-910.png" alt="Default Profile Image" style="max-width: 100px;">
-                    <?php } ?>
+                    <div class="dropdown">
+                        <a href="#" onclick="toggleDropdown('myDropdown1')">
+                            <?php if (!empty($rowuser['profile_img'])) { ?>
+                                <img src="../img/profile/<?php echo $rowuser['profile_img']; ?>" alt="User Profile" style="max-width: 100px;">
+                            <?php } else { ?>
+                                <img src="../img/profile/profile-icon-png-910.png" alt="Default Profile Image" style="max-width: 100px;">
+                            <?php } ?>
+                        </a>
+                        <div id="myDropdown1" class="dropdown-content">
+                            <a href="#" onclick="openModal('addModal')" name="user">change profile</a>
+                            <div id="addModal" class="modaladd">
+                                <div class="modal-contentadd">
+                                    <span class="close" onclick="closeModal('addModal')">&times;</span>
+                                    <form action="changeProfile.php" method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="userid" value="<?php echo $rowuser['user_id']; ?>">
+                                        <input type="hidden" value="<?php echo $rowuser['profile_img']; ?>" required class="form-control" name="oldimg">
+                                        <div class="form-group">
+                                            <div style="text-align: center;">
+                                                <label for="profileImg" style="font-family: Montserrat, sans-serif">Profile Image</label>
+                                                <input type="file" onchange="imagePreview(this)" name="avatar">
+                                                <br><br>
+                                                <?php if (!empty($rowuser['profile_img'])) : ?>
+                                                    <img id="avatar" src="../img/profile/<?php echo $rowuser['profile_img']; ?>" alt="Profile Image">
+                                                <?php else : ?>
+                                                    <img id="avatar" src="../img/profile/profile-icon-png-910.png" alt="Default Profile Image">
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                        <button type="submit" name="saveimg" class="btn-success">Save</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <?php if(!empty($rowuser['profile_img'])) :?>
+                            <form action="changeProfile.php" method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="userid" value="<?php echo $rowuser['user_id']; ?>">
+                                <input type="hidden" value="<?php echo $rowuser['profile_img']; ?>" required class="form-control" name="oldimg">
+                                <button type="submit" name="deleteprofile" style="color: red;" onclick="return confirmDelete();">Delete</button>
+                            </form>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
                     <div>
                         <div class="user"><?php echo $rowuser['username']; ?></div>
                         <div class="email"><?php echo $rowuser['email']; ?></div>
                     </div>
                 </div>
                 <div>
-                    <button class="btn btn-warning" onclick="openModal('editModal_<?php echo $rowuser['user_id']; ?>')">Edit</button>
+                    <button class="btn bg-white " onclick="openModal('editModal_<?php echo $rowuser['user_id']; ?>')">Edit</button>
                     <div id="editModal_<?php echo $rowuser['user_id']; ?>" class="modaladd">
                         <!-- Modal content -->
                         <div class="modal-contentadd">
@@ -86,33 +133,28 @@ if (isset($_SESSION['user_login'])) {
                             ?>
                             <form action="editporfile.php" method="POST" enctype="multipart/form-data">
                                 <input type="hidden" name="editprofileId" value="<?php echo $data['user_id']; ?>">
-                                <input type="hidden" value="<?php echo $data['profile_img']; ?>" required class="form-control" name="oldimg">
-
                                 <div class="form-group">
-                                    <div>
-                                        <label for="username" style="font-family: Montserrat, sans-serif">Username</label>
-                                        <input type="text" name="username" class="input-group" value="<?php echo $data['username']; ?>" required>
+                                    <div style="display: flex; justify-content: space-around;">
+                                        <div style="width: 40%;">
+                                            <label for="username" style="font-family: Montserrat, sans-serif">Username</label>
+                                            <input type="text" name="username" class="input-group" value="<?php echo $data['username']; ?>" required>
+                                        </div>
+                                        <div style="width: 40%;">
+                                            <label for="email" style="font-family: Montserrat, sans-serif">Email</label>
+                                            <input type="text" name="email" class="input-group" value="<?php echo $data['email']; ?>" required>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label for="email" style="font-family: Montserrat, sans-serif">Email</label>
-                                        <input type="text" name="email" class="input-group" value="<?php echo $data['email']; ?>" required>
-                                    </div>
-                                    <div>
-                                        <label for="password">Password</label>
-                                        <input type="password" class="input-group" id="passwordInput" name="password" placeholder="Password" value="<?php echo $data['password']; ?>" required>
-                                        <label for="confirmPassword">Confirm Password</label>
-                                        <input type="password" class="input-group" id="confirmPasswordInput" name="c_password" placeholder="Confirm Password" value="<?php echo $data['password']; ?>" required>
-                                        <input type="checkbox" onclick="showPassword()"> Show Password
-                                    </div>
-                                    <div>
-                                        <label for="profile_img" style="font-family: Montserrat, sans-serif">Image</label>
-                                        <input name="profile_img" id="post_img" type="file" onchange="previewFile()">
-                                        <?php if (!empty($data['profile_img'])) : ?>
-                                            <img id="preview" src="../img/profile/<?php echo $data['profile_img']; ?>" alt="Post Image" style="width: 50%; border-radius: 0px; height: auto; margin: auto;">
-                                        <?php else : ?>
-                                            <img id="preview" src="#" alt="Post Image Preview" style="max-width: 30%; display: none; margin: auto;">
-                                        <?php endif; ?>
-                                    </div>
+
+                                    <div style="display: flex; justify-content: space-around;">
+                                        <div style="width: 39%;">
+                                            <label for="password">Password</label>
+                                            <input type="password" class="input-group" id="passwordInput" name="password" placeholder="Password" value="<?php echo $data['password']; ?>" required>
+                                        </div>
+                                        <div style="width: 41%;">
+                                            <label for="confirmPassword">Confirm Password</label>
+                                            <input type="password" class="input-group" id="confirmPasswordInput" name="c_password" placeholder="Confirm Password" value="<?php echo $data['password']; ?>" required>
+                                        </div>
+                                    </div><input type="checkbox" onclick="showPassword()" style="margin-left: 5%;"> Show Password
                                 </div>
                                 <button type="submit" name="editprofile" class="btn" style="background-color: orange; color: white; transition: background-color 0.3s, color 0.3s;" onmouseover="this.style.backgroundColor='darkorange'; this.style.color='white'" onmouseout="this.style.backgroundColor='orange'; this.style.color='white'">
                                     บันทึก
@@ -126,12 +168,12 @@ if (isset($_SESSION['user_login'])) {
         <div class="bodypost">
             <div class="apppost">
                 <!-- Trigger/Open The Modal -->
-                <button id="myBtn" onclick="openModal('addModal')">เพิ่มโพสต์ที่นี่</button>
+                <button id="myBtn" onclick="openModal('addModal1')" <?php if ($rowuser['isActive'] == 0) echo 'disabled'; ?>>เพิ่มโพสต์ที่นี่</button>
                 <!-- The Modal -->
-                <div id="addModal" class="modaladd">
+                <div id="addModal1" class="modaladd">
                     <!-- Modal content -->
                     <div class="modal-contentadd">
-                        <span class="close" onclick="closeModal('addModal')">&times;</span>
+                        <span class="close" onclick="closeModal('addModal1')">&times;</span>
                         <form action="addpost.php" method="POST" enctype="multipart/form-data">
                             <div class="form-group">
                                 <div>
@@ -157,9 +199,13 @@ if (isset($_SESSION['user_login'])) {
         $query = "SELECT * FROM posts INNER JOIN users ON posts.users_id = users.user_id ORDER BY posts.date DESC, posts.time DESC";
         $result = $conn->query($query);
 
-
         while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
             if ($_SESSION['user_login'] == $row['users_id']) {
+                $postId = $row['post_id'];
+                $sql = $conn->prepare("SELECT COUNT(*) AS comment_count FROM comments WHERE post_id = :postId");
+                $sql->bindParam(":postId", $postId);
+                $sql->execute();
+                $commentCount = $sql->fetch(PDO::FETCH_ASSOC)['comment_count'];
         ?>
                 <div class="card-container">
                     <div class="card-topic">
@@ -186,13 +232,14 @@ if (isset($_SESSION['user_login'])) {
                                                 <input type="text" name="post_title" class="input-group" value="<?php echo $data['post_title']; ?>" required>
                                             </div>
                                             <textarea class="form-control" rows="5" id="comment" name="post_description"><?php echo $data['post_description']; ?></textarea>
+                                            <br>
                                             <div>
                                                 <label for="postImg" style="font-family: Montserrat, sans-serif">Image</label>
                                                 <input name="post_img" id="post_img" type="file" onchange="previewFile()">
                                                 <?php if (!empty($row['post_img'])) : ?>
                                                     <img id="preview" src="../img/postImg/<?php echo $row['post_img']; ?>" alt="Post Image" style="max-width: 30%; margin: auto;">
                                                 <?php else : ?>
-                                                    <img id="preview" src="#" alt="Post Image Preview" style="max-width: 30%; display: none; margin: auto;">
+                                                    <img class="preview" src="../img/postImg/add-image-1-32.png" alt="Post Image Preview" style="width: 20%; height: 20%; margin: auto;">
                                                 <?php endif; ?>
                                             </div>
                                         </div>
@@ -221,7 +268,11 @@ if (isset($_SESSION['user_login'])) {
                             <img src="../img/postImg/<?php echo $row["post_img"]; ?>" alt="Image <?php echo $row['post_id']; ?>">
                         <?php endif; ?>
                     </div>
-                    <div><a href="#" class="btn">comment</a></div>
+                    <div>
+                        <a href="seepost.php?id=<?php echo $postId; ?>" class="btn">
+                            <?php echo $commentCount; ?> comment
+                        </a>
+                    </div>
                 </div>
         <?php
             }
@@ -229,6 +280,7 @@ if (isset($_SESSION['user_login'])) {
         ?>
 
         <script src="../script.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
         <!-- jQuery -->
         <script src="../assets/plugins/jquery/jquery.min.js"></script>
         <!-- Bootstrap 4 -->
@@ -241,23 +293,48 @@ if (isset($_SESSION['user_login'])) {
         <script src="../assets/dist/js/demo.js"></script>
         <script>
             function previewFile() {
-                var preview = document.getElementById('preview');
-                var fileInput = document.getElementById('post_img');
-                var file = fileInput.files[0];
+                var fileInputs = document.querySelectorAll('input[name="post_img"]'); 
 
-                var reader = new FileReader();
+                fileInputs.forEach(function(input) {
+                    var preview = input.nextElementSibling;
+                    var file = input.files[0];
+                    var reader = new FileReader();
 
-                reader.onloadend = function() {
-                    preview.src = reader.result;
-                    preview.style.display = 'block';
-                };
+                    reader.onloadend = function() {
+                        preview.src = reader.result;
+                        preview.style.display = 'block';
+                    };
 
-                if (file) {
-                    reader.readAsDataURL(file);
+                    if (file) {
+                        reader.readAsDataURL(file);
+                    } else {
+                        preview.src = '../img/postImg/add-image-1-32.png';
+                        preview.style.display = 'block'; // แสดงภาพตัวอย่าง
+                    }
+                });
+            }
+
+            const avatar = document.getElementById("avatar")
+
+            function imagePreview(e) {
+                const blob = new Blob([e.files[0]], {
+                    type: "image/jpeg"
+                })
+                const blobURL = URL.createObjectURL(blob)
+                avatar.style.display = "block"
+                avatar.src = blobURL
+            }
+
+            function confirmDelete() {
+                if (confirm("Are you sure you want to delete?")) {
+                    document.getElementById('deleteForm').submit();
                 } else {
-                    preview.src = '#';
-                    preview.style.display = 'none';
+                    return false;
                 }
+            }
+
+            function confirmDelete() {
+                return confirm("Are you sure you want to delete?");
             }
         </script>
 </body>

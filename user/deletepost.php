@@ -10,11 +10,29 @@ if (isset($_POST['post_id'])) {
         // Start a transaction
         $conn->beginTransaction();
 
-        // Delete comments associated with the specific post
-        $delete_comments_query = "DELETE FROM comments WHERE post_id = :post_id";
-        $delete_comments_statement = $conn->prepare($delete_comments_query);
-        $delete_comments_statement->bindParam(':post_id', $post_id);
-        $delete_comments_statement->execute();
+        $fetch_image_query = "SELECT p.post_img FROM posts p WHERE p.post_id = :post_id";
+        $fetch_image_statement = $conn->prepare($fetch_image_query);
+        $fetch_image_statement->bindParam(':post_id', $post_id);
+        $fetch_image_statement->execute();
+        $image_filename = $fetch_image_statement->fetchColumn();
+
+        // // Delete comments associated with the specific post
+        $fetch_comment_images_query = "SELECT comment_img FROM comments WHERE comments.post_id = :post_id";
+        $fetch_comment_images_statement = $conn->prepare($fetch_comment_images_query);
+        $fetch_comment_images_statement->bindParam(':post_id', $post_id);
+        $fetch_comment_images_statement->execute();
+        $comment_images = $fetch_comment_images_statement->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($comment_images as $comment_image) {
+            if ($comment_image && file_exists("../img/commentImg/" . $comment_image)) {
+                unlink("../img/commentImg/" . $comment_image);
+            }
+        }
+
+        // Delete the image file record from the database
+        $delete_image_query = "UPDATE posts SET post_img = NULL WHERE post_id = :post_id";
+        $delete_image_statement = $conn->prepare($delete_image_query);
+        $delete_image_statement->bindParam(':post_id', $post_id);
+        $delete_image_statement->execute();
 
         // Delete the post
         $delete_post_query = "DELETE FROM posts WHERE post_id = :post_id";
@@ -24,6 +42,11 @@ if (isset($_POST['post_id'])) {
 
         // Commit the transaction
         $conn->commit();
+
+        // Delete the post image file if it exists
+        if ($image_filename && file_exists("../img/postImg/" . $image_filename)) {
+            unlink("../img/postImg/" . $image_filename);
+        }
 
         // Redirect based on the referring page
         if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], "profileuser.php") !== false) {
@@ -36,7 +59,6 @@ if (isset($_POST['post_id'])) {
     } catch (PDOException $e) {
         // An error occurred, rollback the transaction
         $conn->rollBack();
-
         // Handle the error, you can log it or display a user-friendly message
         echo 'Error: ' . $e->getMessage();
     }
@@ -45,4 +67,3 @@ if (isset($_POST['post_id'])) {
     echo 'Invalid request';
     ob_end_flush();
 }
-

@@ -1,5 +1,5 @@
-<?php include './header.php'; 
-    require_once './security/condb.php';
+<?php include './header.php';
+require_once './security/condb.php';
 ?>
 
 <link rel="stylesheet" href="style.css">
@@ -9,10 +9,16 @@ $query = "SELECT * FROM posts INNER JOIN users ON posts.users_id = users.user_id
 $result = $conn->query($query);
 
 while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+    $postId = $row['post_id'];
+    $sql = $conn->prepare("SELECT COUNT(*) AS comment_count FROM comments WHERE post_id = :postId");
+    $sql->bindParam(":postId", $postId);
+    $sql->execute();
+    $commentCount = $sql->fetch(PDO::FETCH_ASSOC)['comment_count'];
 ?>
+
     <div class="card-container" style="padding-bottom: 20px;">
         <div class="card-topic">
-            <div><a href="seepost.php?id=<?php echo $row['post_id'];?>"><?php echo $row['post_title']; ?></a></div>
+            <div><a href="seepost.php?id=<?php echo $row['post_id']; ?>"><?php echo $row['post_title']; ?></a></div>
         </div>
         <div class="card-name">
             <div><?php echo $row['username']; ?></div>
@@ -25,6 +31,11 @@ while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
             <?php if (!empty($row["post_img"])) : ?>
                 <img src="./img/postImg/<?php echo $row["post_img"]; ?>" alt="Image <?php echo $row['post_id']; ?>">
             <?php endif; ?>
+        </div>
+        <div>
+            <a href="seepost.php?id=<?php echo $postId; ?>" class="btn">
+                <?php echo $commentCount; ?> comment
+            </a>
         </div>
     </div>
 <?php

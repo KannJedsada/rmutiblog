@@ -47,8 +47,8 @@ function showPassword() {
 }
 
 // เมนู dropdown
-function myFunction() {
-  var dropdown = document.getElementById("myDropdown");
+function toggleDropdown(dropdownId) {
+  var dropdown = document.getElementById(dropdownId);
   dropdown.classList.toggle("show");
 }
 
@@ -94,6 +94,26 @@ function previewImage() {
   reader.onload = function (e) {
     preview.src = e.target.result;
   };
-
+  
   reader.readAsDataURL(input.files[0]);
 }
+
+
+function showConfirmation() {
+  Swal.fire({
+    title: "Are you sure?",
+    text: "You won't be able to revert this!",
+    icon: "question", // กำหนดไอคอนเป็นคำถาม
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      setTimeout(function() {
+        window.location.href = "../index.php";
+      });
+    }
+  });
+}
+

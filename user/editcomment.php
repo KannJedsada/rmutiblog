@@ -18,6 +18,10 @@ if (isset($_POST['editcomment'])) {
         $fileNew = rand() . "." . $fileActExt;
         $filePath = '../img/commentImg/' . $fileNew;
 
+        if (!empty($cimg2) && file_exists("../img/commentImg/" . $cimg2)) {
+            unlink("../img/commentImg/" . $cimg2);
+        }
+
         if ($cimg['error'] !== UPLOAD_ERR_OK) {
             die("File upload failed with error code {$cimg['error']}");
         }        
@@ -37,7 +41,7 @@ if (isset($_POST['editcomment'])) {
     $sql->bindParam(":editcid", $editcid);
     $sql->execute();
 
-    $query = "SELECT * FROM posts INNER JOIN users ON posts.post_by = users.user_id ORDER BY posts.date DESC, posts.time DESC";
+    $query = "SELECT * FROM posts INNER JOIN users ON posts.users_id = users.user_id ORDER BY posts.date DESC, posts.time DESC";
     $result = $conn->query($query);
     $row = $result->fetch(PDO::FETCH_ASSOC);
     if ($sql) {
@@ -47,5 +51,14 @@ if (isset($_POST['editcomment'])) {
         $_SESSION['error'] = "Data has not been updated successfully";
         header("location: index.php");
     }
+}
+if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], "profileuser.php") !== false) {
+    // กลับไปยังหน้า profile.php
+    header("location: profileuser.php");
+    exit();
+} else {
+    // กลับไปยังหน้า userindex.php
+    header("location: userindex.php");
+    exit();
 }
 ?>

@@ -23,7 +23,7 @@ if (!isset($_SESSION['admin_login'])) {
     <link rel="stylesheet" href="../assets/plugins/fontawesome-free/css/all.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="../assets/dist/css/adminlte.min.css">
-    <title>User Page</title>
+    <title>Admin Page</title>
 </head>
 
 <body>
@@ -37,27 +37,15 @@ if (!isset($_SESSION['admin_login'])) {
     }
     ?>
     <div class="nav-container">
-        <div class="logo"><a href="./adminindex.php">RMUTI</a></div>
-        <div>
+        <div class="logo"><a href="./adminindex.php"><i class="fas fa-home"></i></a></div>
+        <div> 
             <form action="search.php" method="get" class="clear-input-container">
                 <input class="clear-input" type="text" name="search"> <!-- Corrected name attribute -->
                 <button class="clear-input-button" aria-label="Clear input" title="Clear input">×</button>
                 <button type="submit" class="clear-search"><i class="fas fa-search"></i></button>
             </form>
         </div>
-        <div class="dropdown">
-            <button onclick="myFunction()" class="dropbtn">
-                <?php if (!empty($row['profile_img'])) { ?>
-                    <img src="../img/profile/<?php echo $row['profile_img']; ?>" alt="User Profile">
-                <?php } else { ?>
-                    <img src="../img/profile/profile-icon-png-910.png" alt="Default Profile Image">
-                <?php } ?>
-                &nbsp; <?php echo $row['username']; ?></button>
-            <div id="myDropdown" class="dropdown-content">
-                <a href="./profileuser.php?id=<?php echo $row['user_id']; ?>" name="user">Profile</a>
-                <a href="../security/logout.php">Logout</a>
-            </div>
-        </div>
+       
     </div>
     <?php
     // ดึงข้อมูลโพสต์จากตาราง posts
@@ -65,12 +53,17 @@ if (!isset($_SESSION['admin_login'])) {
     $result = $conn->query($query);
 
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+        $postId = $row['post_id'];
+        $sql = $conn->prepare("SELECT COUNT(*) AS comment_count FROM comments WHERE post_id = :postId");
+        $sql->bindParam(":postId", $postId);
+        $sql->execute();
+        $commentCount = $sql->fetch(PDO::FETCH_ASSOC)['comment_count'];
     ?>
         <div class="card-container">
             <div class="card-topic">
                 <div><a href="./seepost.php?id=<?php echo $row['post_id']; ?>"><?php echo $row['post_title']; ?></a></div>
                 <div>
-                    <button class="btn btn-warning" onclick="openModal('editModal_<?php echo $row['post_id']; ?>')">Edit</button>
+                <!-- <button class="btn btn-warning" onclick="openModal('editModal_<?php echo $row['post_id']; ?>')">Edit</button> -->
                     <div id="editModal_<?php echo $row['post_id']; ?>" class="modaladd">
                         <!-- Modal content -->
                         <div class="modal-contentadd">
@@ -126,7 +119,7 @@ if (!isset($_SESSION['admin_login'])) {
                     <img src="../img/postImg/<?php echo $row["post_img"]; ?>" alt="Image <?php echo $row['post_id']; ?>">
                 <?php endif; ?>
             </div>
-            <div><a href="seepost.php?id=<?php echo $row['post_id']; ?>" class="btn">comment</a></div>
+            <div><a href="seepost.php?id=<?php echo $row['post_id']; ?>" class="btn"> <?php echo $commentCount; ?> comment</a></div>
         </div>
     <?php
     }

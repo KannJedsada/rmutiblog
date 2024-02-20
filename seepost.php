@@ -41,7 +41,7 @@ if (isset($_GET['id'])) {
         <div class="post">
             <div>
                 <?php
-                $query = "SELECT * FROM posts INNER JOIN users ON posts.post_by = users.user_id WHERE posts.post_id = :pid";
+                $query = "SELECT * FROM posts INNER JOIN users ON posts.users_id = users.user_id WHERE posts.post_id = :pid";
                 $stmtp = $conn->prepare($query);
                 $stmtp->bindParam(":pid", $pid);
                 $stmtp->execute();
@@ -68,8 +68,8 @@ if (isset($_GET['id'])) {
                 <?php
                 $query = "SELECT comments.*, users.username AS comment_by
         FROM posts
-        INNER JOIN comments ON posts.post_id = comments.comment_in
-        INNER JOIN users ON comments.comment_by = users.user_id
+        INNER JOIN comments ON posts.post_id = comments.post_id
+        INNER JOIN users ON comments.users_id = users.user_id
         WHERE posts.post_id = :pid";
                 $stmtc = $conn->prepare($query);
                 $stmtc->bindParam(":pid", $pid);

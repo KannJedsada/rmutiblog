@@ -3,7 +3,7 @@ require_once "../security/condb.php";
 
 if (isset($_GET['id'])) {
     $uid = $_GET['id'];
-
+    echo $uid;
     $stmt_check = $conn->prepare("SELECT * FROM users 
     LEFT JOIN posts ON users.user_id = posts.users_id 
     LEFT JOIN comments ON users.user_id = comments.users_id 
@@ -48,4 +48,3 @@ if (isset($_GET['id'])) {
         echo "User not found!";
     }
 }
-?>

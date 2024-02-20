@@ -23,6 +23,7 @@ if (!isset($_SESSION['user_login'])) {
     <link rel="stylesheet" href="../assets/plugins/fontawesome-free/css/all.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="../assets/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10">
     <title>User Page</title>
 </head>
 
@@ -33,7 +34,7 @@ if (!isset($_SESSION['user_login'])) {
         $stmt = $conn->prepare("SELECT * FROM users WHERE user_id = :user_id");
         $stmt->bindParam(":user_id", $user_id);
         $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $rowuser = $stmt->fetch(PDO::FETCH_ASSOC);
     }
     ?>
     <div class="nav-container">
@@ -46,23 +47,24 @@ if (!isset($_SESSION['user_login'])) {
             </form>
         </div>
         <div class="dropdown">
-            <button onclick="myFunction()" class="dropbtn">
-                <?php if (!empty($row['profile_img'])) { ?>
-                    <img src="../img/profile/<?php echo $row['profile_img']; ?>" alt="User Profile">
+            <button onclick="toggleDropdown('myDropdown')" class="dropbtn">
+                <?php if (!empty($rowuser['profile_img'])) { ?>
+                    <img src="../img/profile/<?php echo $rowuser['profile_img']; ?>" alt="User Profile">
                 <?php } else { ?>
                     <img src="../img/profile/profile-icon-png-910.png" alt="Default Profile Image">
                 <?php } ?>
-                &nbsp; <?php echo $row['username'] ?></button>
-            <div id="myDropdown" class="dropdown-content">
-                <a href="./profileuser.php?id=<?php echo $row['user_id']; ?>" name="user">Profile</a>
-                <a href="../security/logout.php">Logout</a>
+                &nbsp; <?php echo $rowuser['username'] ?>
+            </button>
+            <div id="myDropdown" class="dropdown-content1">
+                <a href="./profileuser.php?id=<?php echo $rowuser['user_id']; ?>" name="user">Profile</a>
+                <a href="javascript:void(0);" onclick="showConfirmation();" style="color: red;">Logout</a>
             </div>
         </div>
     </div>
-    <div class="bodypost">
+    <div class=" bodypost">
         <div class="apppost">
             <!-- Trigger/Open The Modal -->
-            <button id="myBtn" onclick="openModal('addModal')">เพิ่มโพสต์ที่นี่</button>
+            <button id="myBtn" onclick="openModal('addModal')" <?php if ($rowuser['isActive'] == 0) echo 'disabled'; ?>>เพิ่มโพสต์ที่นี่</button>
             <!-- The Modal -->
             <div id="addModal" class="modaladd">
                 <!-- Modal content -->
@@ -93,60 +95,67 @@ if (!isset($_SESSION['user_login'])) {
     $result = $conn->query($query);
 
     while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+        // Fetching comment count for the current post
+        $postId = $row['post_id'];
+        $sql = $conn->prepare("SELECT COUNT(*) AS comment_count FROM comments WHERE post_id = :postId");
+        $sql->bindParam(":postId", $postId);
+        $sql->execute();
+        $commentCount = $sql->fetch(PDO::FETCH_ASSOC)['comment_count'];
     ?>
         <div class="card-container">
             <div class="card-topic">
-                <div><a href="./seepost.php?id=<?php echo $row['post_id']; ?>"><?php echo $row['post_title']; ?></a></div>
-                <?php if ($row['users_id'] == $_SESSION['user_login']) {  ?>
-                    <div>
-                        <button class="btn btn-warning" onclick="openModal('editModal_<?php echo $row['post_id']; ?>')">Edit</button>
-                        <div id="editModal_<?php echo $row['post_id']; ?>" class="modaladd">
-                            <!-- Modal content -->
-                            <div class="modal-contentadd">
-                                <span class="close" onclick="closeModal('editModal_<?php echo $row['post_id']; ?>')">&times;</span>
-                                <?php
-                                $editPostId = $row['post_id'];
-                                $stmt = $conn->prepare("SELECT * FROM posts WHERE post_id = :editPostId");
-                                $stmt->bindParam(":editPostId", $editPostId);
-                                $stmt->execute();
-                                $data = $stmt->fetch(PDO::FETCH_ASSOC);
-                                ?>
-                                <form action="editpost.php" method="POST" enctype="multipart/form-data">
-                                    <input type="hidden" name="editPostId" value="<?php echo $data['post_id']; ?>">
-                                    <input type="hidden" value="<?php echo $data['post_img']; ?>" required class="form-control" name="img2">
-                                    <div class="form-group">
-                                        <div>
-                                            <label for="title" style="font-family: Montserrat, sans-serif">Title</label>
-                                            <input type="text" name="post_title" class="input-group" value="<?php echo $data['post_title']; ?>" required>
-                                        </div>
-                                        <textarea class="form-control" rows="5" id="comment" name="post_description"><?php echo $data['post_description']; ?></textarea>
-                                        <div>
-                                            <label for="postImg" style="font-family: Montserrat, sans-serif">Image</label>
-                                            <input name="post_img" id="post_img" type="file" onchange="previewFile()">
-                                            <?php if (!empty($row['post_img'])) : ?>
-                                                <img id="preview" src="../img/postImg/<?php echo $row['post_img']; ?>" alt="Post Image" style="max-width: 30%; margin: auto;">
-                                            <?php else : ?>
-                                                <img id="preview" src="#" alt="Post Image Preview" style="max-width: 30%; display: none; margin: auto;">
-                                            <?php endif; ?>
-                                        </div>
+                <div><a href="./seepost.php?id=<?php echo $row['post_id'] ?>"><?php echo $row['post_title']; ?></a></div>
+                <?php if($rowuser['user_id'] == $row['users_id'] ){?>
+                <div> 
+                    <button class="btn btn-warning" onclick="openModal('editModal_<?php echo $row['post_id']; ?>')">Edit</button>
+                    <div id="editModal_<?php echo $row['post_id']; ?>" class="modaladd">
+                        <!-- Modal content -->
+                        <div class="modal-contentadd">
+                            <span class="close" onclick="closeModal('editModal_<?php echo $row['post_id']; ?>')">&times;</span>
+                            <?php
+                            $editPostId = $row['post_id'];
+                            $stmt = $conn->prepare("SELECT * FROM posts WHERE post_id = :editPostId");
+                            $stmt->bindParam(":editPostId", $editPostId);
+                            $stmt->execute();
+                            $data = $stmt->fetch(PDO::FETCH_ASSOC);
+                            ?>
+                            <form action="editpost.php" method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="editPostId" value="<?php echo $data['post_id']; ?>">
+                                <input type="hidden" value="<?php echo $data['post_img']; ?>" required class="form-control" name="img2">
+                                <div class="form-group">
+                                    <div>
+                                        <label for="title" style="font-family: Montserrat, sans-serif">Title</label>
+                                        <input type="text" name="post_title" class="input-group" value="<?php echo $data['post_title']; ?>" required>
                                     </div>
-                                    <button type="submit" name="editpost" class="btn" style="background-color: orange; color: white; transition: background-color 0.3s, color 0.3s;" onmouseover="this.style.backgroundColor='darkorange'; this.style.color='white'" onmouseout="this.style.backgroundColor='orange'; this.style.color='white'">
-                                        บันทึก
-                                    </button>
-                                </form>
-                            </div>
+                                    <textarea class="form-control" rows="5" id="comment" name="post_description"><?php echo $data['post_description']; ?></textarea>
+                                    <div>
+                                        <label for="postImg" style="font-family: Montserrat, sans-serif">Image</label>
+                                        <input name="post_img" id="post_img" type="file" onchange="previewFile()">
+                                        <?php if (!empty($row['post_img'])) : ?>
+                                            <img id="preview" src="../img/postImg/<?php echo $row['post_img']; ?>" alt="Post Image" style="max-width: 30%; margin: auto;">
+                                        <?php else : ?>
+                                            <img id="preview" src="#" alt="Post Image Preview" style="max-width: 30%; display: none; margin: auto;">
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <button type="submit" name="editpost" class="btn" style="background-color: orange; color: white; transition: background-color 0.3s, color 0.3s;" onmouseover="this.style.backgroundColor='darkorange'; this.style.color='white'" onmouseout="this.style.backgroundColor='orange'; this.style.color='white'">
+                                    บันทึก
+                                </button>
+                            </form>
                         </div>
-                        <form action="deletepost.php" method="POST" style="display: inline;">
-                            <input type="hidden" name="post_id" value="<?php echo $row['post_id']; ?>">
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('จะลบจริงป่าว?');">Delete</button>
-                        </form>
                     </div>
+                    <form action="deletepost.php" method="POST" style="display: inline;">
+                        <input type="hidden" name="post_id" value="<?php echo $row['post_id']; ?>">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('จะลบจริงป่าว?');">Delete</button>
+                    </form>
+                </div>
                 <?php } ?>
             </div>
             <div class="card-name">
                 <div><?php echo $row['username']; ?></div>
                 <div><?php echo date('d/m/Y', strtotime($row['date'])) . ', ' . date('H:i', strtotime($row['time'])); ?></div>
             </div>
+
             <div class="description">
                 <p><?php echo $row['post_description']; ?></p>
             </div>
@@ -155,14 +164,20 @@ if (!isset($_SESSION['user_login'])) {
                     <img src="../img/postImg/<?php echo $row["post_img"]; ?>" alt="Image <?php echo $row['post_id']; ?>">
                 <?php endif; ?>
             </div>
-            <div><a href="seepost.php?id=<?php echo $row['post_id']; ?>" class="btn">comment</a></div>
+            <div>
+                <a href="seepost.php?id=<?php echo $postId; ?>" class="btn">
+                    <?php echo $commentCount; ?> comment
+                </a>
+            </div>
         </div>
     <?php
     }
     ?>
 
 
+
     <script src="../script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <!-- jQuery -->
     <script src="../assets/plugins/jquery/jquery.min.js"></script>
     <!-- Bootstrap 4 -->
@@ -175,23 +190,25 @@ if (!isset($_SESSION['user_login'])) {
     <script src="../assets/dist/js/demo.js"></script>
     <script>
         function previewFile() {
-            var preview = document.getElementById('preview');
-            var fileInput = document.getElementById('post_img');
-            var file = fileInput.files[0];
+            var fileInputs = document.querySelectorAll('input[name="post_img"]');
 
-            var reader = new FileReader();
+            fileInputs.forEach(function(input) {
+                var preview = input.nextElementSibling;
+                var file = input.files[0];
+                var reader = new FileReader();
 
-            reader.onloadend = function() {
-                preview.src = reader.result;
-                preview.style.display = 'block';
-            };
+                reader.onloadend = function() {
+                    preview.src = reader.result;
+                    preview.style.display = 'block';
+                };
 
-            if (file) {
-                reader.readAsDataURL(file);
-            } else {
-                preview.src = '#';
-                preview.style.display = 'none';
-            }
+                if (file) {
+                    reader.readAsDataURL(file);
+                } else {
+                    // preview.src = '../img/postImg/add-image-1-32.png';
+                    preview.style.display = 'block';
+                }
+            });
         }
     </script>
 </body>

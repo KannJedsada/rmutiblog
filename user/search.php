@@ -16,25 +16,6 @@ if (isset($_GET['search'])) {
     $stmt->execute();
 
     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if (!$result) {
-        header("location: nopost.php");
-        die("Query failed: " . $stmt->errorInfo()[2]);
-    }
-} else {
-    
-    $sql = "SELECT posts.*, users.username, users.profile_img
-            FROM posts 
-            INNER JOIN users ON posts.post_by = users.user_id
-            ORDER BY posts.date DESC, posts.time DESC";
-
-    $stmt = $conn->query($sql);
-
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if (!$result) {
-        die("Query failed: " . $stmt->errorInfo()[2]);
-    }
 } ?>
 
 <!DOCTYPE html>
@@ -63,6 +44,7 @@ if (isset($_GET['search'])) {
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
     ?>
     <div class="nav-container">
         <div class="logo"><a href="./userindex.php">RMUTI</a></div>
@@ -86,73 +68,83 @@ if (isset($_GET['search'])) {
                 <a href="../security/logout.php">Logout</a>
             </div>
         </div>
-    </div> <?php
-    foreach ($result as $row) {
-    ?>
-        <div class="card-container">
-            <div class="card-topic">
-                <div><a href="./seepost.php?id=<?php echo $row['post_id']; ?>"><?php echo $row['post_title']; ?></a></div>
-                <?php if ($row['users_id'] == $_SESSION['user_login']) {  ?>
-                    <div>
-                        <button class="btn btn-warning" onclick="openModal('editModal_<?php echo $row['post_id']; ?>')">Edit</button>
-                        <div id="editModal_<?php echo $row['post_id']; ?>" class="modaladd">
-                            <!-- Modal content -->
-                            <div class="modal-contentadd">
-                                <span class="close" onclick="closeModal('editModal_<?php echo $row['post_id']; ?>')">&times;</span>
-                                <?php
-                                $editPostId = $row['post_id'];
-                                $stmt = $conn->prepare("SELECT * FROM posts WHERE post_id = :editPostId");
-                                $stmt->bindParam(":editPostId", $editPostId);
-                                $stmt->execute();
-                                $data = $stmt->fetch(PDO::FETCH_ASSOC);
-                                ?>
-                                <form action="editpost.php" method="POST" enctype="multipart/form-data">
-                                    <input type="hidden" name="editPostId" value="<?php echo $data['post_id']; ?>">
-                                    <input type="hidden" value="<?php echo $data['post_img']; ?>" required class="form-control" name="img2">
-                                    <div class="form-group">
-                                        <div>
-                                            <label for="title" style="font-family: Montserrat, sans-serif">Title</label>
-                                            <input type="text" name="post_title" class="input-group" value="<?php echo $data['post_title']; ?>" required>
-                                        </div>
-                                        <textarea class="form-control" rows="5" id="comment" name="post_description"><?php echo $data['post_description']; ?></textarea>
-                                        <div>
-                                            <label for="postImg" style="font-family: Montserrat, sans-serif">Image</label>
-                                            <input name="post_img" id="post_img" type="file" onchange="previewFile()">
-                                            <?php if (!empty($row['post_img'])) : ?>
-                                                <img id="preview" src="../img/postImg/<?php echo $row['post_img']; ?>" alt="Post Image" style="max-width: 30%; margin: auto;">
-                                            <?php else : ?>
-                                                <img id="preview" src="#" alt="Post Image Preview" style="max-width: 30%; display: none; margin: auto;">
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                    <button type="submit" name="editpost" class="btn" style="background-color: orange; color: white; transition: background-color 0.3s, color 0.3s;" onmouseover="this.style.backgroundColor='darkorange'; this.style.color='white'" onmouseout="this.style.backgroundColor='orange'; this.style.color='white'">
-                                        บันทึก
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        <form action="deletepost.php" method="POST" style="display: inline;">
-                            <input type="hidden" name="post_id" value="<?php echo $row['post_id']; ?>">
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('จะลบจริงป่าว?');">Delete</button>
-                        </form>
-                    </div>
-                <?php } ?>
-            </div>
-            <div class="card-name">
-                <div><?php echo $row['username']; ?></div>
-                <div><?php echo $row['date'] . ', ' . $row['time']; ?></div>
-            </div>
-            <div class="description">
-                <p><?php echo $row['post_description']; ?></p>
-            </div>
-            <div class="card-img">
-                <?php if (!empty($row["post_img"])) : ?>
-                    <img src="../img/postImg/<?php echo $row["post_img"]; ?>" alt="Image <?php echo $row['post_id']; ?>">
-                <?php endif; ?>
-            </div>
-            <div><a href="seepost.php?id=<?php echo $row['post_id']; ?>" class="btn">comment</a></div>
-        </div>
+    </div>
     <?php
+    if (empty($result)) {
+        echo '<div style="text-align: center; margin-top: 10%; font-weight: bold; font-size: 50px;">ไม่มี Post ที่เกี่ยวข้อง</div>';
+    } else {
+        foreach ($result as $row) {
+            $postId = $row['post_id'];
+            $sql = $conn->prepare("SELECT COUNT(*) AS comment_count FROM comments WHERE post_id = :postId");
+            $sql->bindParam(":postId", $postId);
+            $sql->execute();
+            $commentCount = $sql->fetch(PDO::FETCH_ASSOC)['comment_count'];
+    ?>
+            <div class="card-container">
+                <div class="card-topic">
+                    <div><a href="./seepost.php?id=<?php echo $row['post_id']; ?>"><?php echo $row['post_title']; ?></a></div>
+                    <?php if ($row['users_id'] == $_SESSION['user_login']) {  ?>
+                        <div>
+                            <button class="btn btn-warning" onclick="openModal('editModal_<?php echo $row['post_id']; ?>')">Edit</button>
+                            <div id="editModal_<?php echo $row['post_id']; ?>" class="modaladd">
+                                <!-- Modal content -->
+                                <div class="modal-contentadd">
+                                    <span class="close" onclick="closeModal('editModal_<?php echo $row['post_id']; ?>')">&times;</span>
+                                    <?php
+                                    $editPostId = $row['post_id'];
+                                    $stmt = $conn->prepare("SELECT * FROM posts WHERE post_id = :editPostId");
+                                    $stmt->bindParam(":editPostId", $editPostId);
+                                    $stmt->execute();
+                                    $data = $stmt->fetch(PDO::FETCH_ASSOC);
+                                    ?>
+                                    <form action="editpost.php" method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="editPostId" value="<?php echo $data['post_id']; ?>">
+                                        <input type="hidden" value="<?php echo $data['post_img']; ?>" required class="form-control" name="img2">
+                                        <div class="form-group">
+                                            <div>
+                                                <label for="title" style="font-family: Montserrat, sans-serif">Title</label>
+                                                <input type="text" name="post_title" class="input-group" value="<?php echo $data['post_title']; ?>" required>
+                                            </div>
+                                            <textarea class="form-control" rows="5" id="comment" name="post_description"><?php echo $data['post_description']; ?></textarea>
+                                            <div>
+                                                <label for="postImg" style="font-family: Montserrat, sans-serif">Image</label>
+                                                <input name="post_img" id="post_img" type="file" onchange="previewFile()">
+                                                <?php if (!empty($row['post_img'])) : ?>
+                                                    <img id="preview" src="../img/postImg/<?php echo $row['post_img']; ?>" alt="Post Image" style="max-width: 30%; margin: auto;">
+                                                <?php else : ?>
+                                                    <img id="preview" src="#" alt="Post Image Preview" style="max-width: 30%; display: none; margin: auto;">
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                        <button type="submit" name="editpost" class="btn" style="background-color: orange; color: white; transition: background-color 0.3s, color 0.3s;" onmouseover="this.style.backgroundColor='darkorange'; this.style.color='white'" onmouseout="this.style.backgroundColor='orange'; this.style.color='white'">
+                                            บันทึก
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <form action="deletepost.php" method="POST" style="display: inline;">
+                                <input type="hidden" name="post_id" value="<?php echo $row['post_id']; ?>">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('จะลบจริงป่าว?');">Delete</button>
+                            </form>
+                        </div>
+                    <?php } ?>
+                </div>
+                <div class="card-name">
+                    <div><?php echo $row['username']; ?></div>
+                    <div><?php echo $row['date'] . ', ' . $row['time']; ?></div>
+                </div>
+                <div class="description">
+                    <p><?php echo $row['post_description']; ?></p>
+                </div>
+                <div class="card-img">
+                    <?php if (!empty($row["post_img"])) : ?>
+                        <img src="../img/postImg/<?php echo $row["post_img"]; ?>" alt="Image <?php echo $row['post_id']; ?>">
+                    <?php endif; ?>
+                </div>
+                <div><a href="seepost.php?id=<?php echo $row['post_id']; ?>" class="btn"><?php echo $commentCount; ?> comment</a></div>
+            </div>
+    <?php
+        }
     }
     ?>
 

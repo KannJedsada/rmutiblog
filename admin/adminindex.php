@@ -42,7 +42,7 @@ if (!isset($_SESSION['admin_login'])) {
     $stmtDailyCount->execute();
     $dailyCount = $stmtDailyCount->fetch(PDO::FETCH_ASSOC)['daily_count'];
 
-    $stmtAdminCount = $conn->prepare("SELECT COUNT(*) AS admin_count FROM users WHERE role_id = 900");
+    $stmtAdminCount = $conn->prepare("SELECT COUNT(*) AS admin_count FROM users WHERE role_id = 900 or role_id = 999");
     $stmtAdminCount->execute();
     $adminCount = $stmtAdminCount->fetch(PDO::FETCH_ASSOC)['admin_count'];
 
@@ -58,7 +58,7 @@ if (!isset($_SESSION['admin_login'])) {
     <div class="col">
         <div class="box-r">
             <div class="col-a">
-                <a href="profile.php?id=<?php echo $row["user_id"] ?>">Profile</a>
+                <a href="profile.php?id=<?php echo $row["user_id"] ?>"><?php echo $row['username'];?></a>
             </div>
             <div class="col-a">
                 <a href="../security/logout.php">Logout</a>
@@ -75,7 +75,7 @@ if (!isset($_SESSION['admin_login'])) {
                 <a href="regis.php"><i class="ri-folder-open-line"></i>Registration : <?php echo $dailyCount; ?></a>
             </div>
             <div class="box-a">
-                <a href="post.php"><i class="ri-timer-line"></i>Post of : <?php echo $postCount; ?></a>
+                <a href="post.php"><i class="ri-timer-line"></i>Post : <?php echo $postCount; ?></a>
             </div>
         </div>
 

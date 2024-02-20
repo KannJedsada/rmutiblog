@@ -19,8 +19,10 @@ if (isset($_GET['search'])) {
     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (!$result) {
-        die("ไม่มี Post ที่เกี่ยวข้อง" . $stmt->errorInfo()[2]);
+        echo '<div style="text-align: center; margin-top: 10%; font-weight: bold; font-size: 50px;">ไม่มี Post ที่เกี่ยวข้อง</div>';
+        die($stmt->errorInfo()[2]);
     }
+    
 } else {
   
     $sql = "SELECT posts.*, users.username, users.profile_img

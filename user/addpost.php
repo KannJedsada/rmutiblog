@@ -38,14 +38,11 @@ if (isset($_POST['addpost'])) {
         $sql->execute();
     }
 
-    // ตรวจสอบว่ามีการกำหนด HTTP_REFERER และตรงกับ URL ของ profile.php
     if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], "profileuser.php") !== false) {
-        // กลับไปยังหน้า profile.php
-        header("location: profileuser.php");
+        header("location: ./profileuser.php");
         exit();
     } else {
-        // กลับไปยังหน้า userindex.php
-        header("location: userindex.php");
+        header("location: ./userindex.php");
         exit();
     }
 }

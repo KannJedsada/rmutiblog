@@ -7,7 +7,12 @@ if (isset($_SESSION['admin_login'])) {
     $stmt->bindParam(":admin_id", $admin_id);
     $stmt->execute();
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $sql = "SELECT * FROM users where role_id = 900";
+    $sql = "SELECT u.*, r.*, i.*
+    FROM users AS u
+    JOIN roleid AS r ON u.role_id = r.role_id
+    JOIN isactive AS i ON u.isActive = i.isActiveid
+    WHERE u.role_id = 900 or u.role_id = 999 
+    ORDER BY u.role_id DESC";
     $result = $conn->query($sql);
 }
 
@@ -82,7 +87,7 @@ if (isset($_SESSION['admin_login'])) {
                     <th>#</th>
                     <th>User id</th>
                     <th>Username</th>
-                    <th>role id</th>
+                    <th>role</th>
                     <th>is Active</th>
                     <th>Action</th>
                 </tr>
@@ -94,12 +99,12 @@ if (isset($_SESSION['admin_login'])) {
                         <td><?php echo $count; ?></td>
                         <td><?php echo $rowuser['user_id']; ?></td>
                         <td><?php echo $rowuser['username']; ?></td>
-                        <td><?php echo $rowuser['role_id']; ?></td>
-                        <td><?php echo $rowuser['isActive']; ?></td>
+                        <td><?php echo $rowuser['role_status']; ?></td>
+                        <td><?php echo $rowuser['status']; ?></td>
                         <td>
-                            <?php if ($_SESSION["admin_login"] != $rowuser["user_id"]) { ?>
+                            <?php if ($_SESSION["admin_login"] != $rowuser["user_id"] and $rowuser['role_id'] != 999) { ?>
                                 <div>
-                                    <a id="popupButton" class="text-warning" onclick="openModal('editModal_<?php echo $rowuser['user_id']; ?>')">
+                                    <a href="#" id="popupButton" class="text-warning" onclick="openModal('editModal_<?php echo $rowuser['user_id']; ?>')">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M5 18.89H6.41421L15.7279 9.57627L14.3137 8.16206L5 17.4758V18.89ZM21 20.89H3V16.6473L16.435 3.21231C16.8256 2.82179 17.4587 2.82179 17.8492 3.21231L20.6777 6.04074C21.0682 6.43126 21.0682 7.06443 20.6777 7.45495L9.24264 18.89H21V20.89ZM15.7279 6.74785L17.1421 8.16206L18.5563 6.74785L17.1421 5.33363L15.7279 6.74785Z"></path>
                                         </svg></a>
@@ -134,13 +139,34 @@ if (isset($_SESSION['admin_login'])) {
                                                     </div>
                                                     <div>
                                                         <label for="role_id" style="font-family: Montserrat, sans-serif">Role id</label>
-                                                        <input type="text" name="role_id" class="input-group" value="<?php echo $data['role_id']; ?>" required>
+                                                        <?php
+                                                        $role = $conn->prepare("SELECT * FROM roleid");
+                                                        $role->execute();
+                                                        ?>
+                                                        <select name="roleid" class="form-select" required>
+                                                            <?php
+                                                            while ($datarole = $role->fetch(PDO::FETCH_ASSOC)) {
+                                                                if ($datarole['role_id'] != 999) {
+                                                                    $selected = ($datarole['role_id'] == $data['role_id']) ? 'selected' : '';
+                                                                    echo '<option value="' . $datarole['role_id'] . '" ' . $selected . '>' . $datarole['role_status'] . '</option>';
+                                                                }
+                                                            }
+                                                            ?>
+                                                        </select>
                                                     </div>
                                                     <div>
                                                         <label for="isActive" style="font-family: Montserrat, sans-serif">Is Active</label>
+                                                        <?php
+                                                        $isactive = $conn->prepare("SELECT * FROM isactive");
+                                                        $isactive->execute();
+                                                        ?>
                                                         <select name="isActive" class="form-select" required>
-                                                            <option value="1" <?php echo ($data['isActive'] == 1) ? 'selected' : ''; ?>>1</option>
-                                                            <option value="0" <?php echo ($data['isActive'] == 0) ? 'selected' : ''; ?>>0</option>
+                                                            <?php
+                                                            while ($dataactive = $isactive->fetch(PDO::FETCH_ASSOC)) {
+                                                                $selected = ($dataactive['isActiveid'] == $data['isActive']) ? 'selected' : '';
+                                                                echo '<option value="' . $dataactive['isActiveid'] . '" ' . $selected . '>' . $dataactive['status'] . '</option>';
+                                                            }
+                                                            ?>
                                                         </select>
                                                     </div>
                                                 </div>

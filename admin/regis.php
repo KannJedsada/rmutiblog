@@ -69,7 +69,7 @@ $result = $conn->query($sql);
                     <th>#</th>
                     <th>User id</th>
                     <th>Username</th>
-                    <th>role id</th>
+                    <th>role</th>
                     <th>is Active</th>
                 </tr>
             </thead>
