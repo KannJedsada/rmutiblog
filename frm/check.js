@@ -13,7 +13,12 @@ $(document).ready(function () {
     }
 
     if (/^\d/.test(username)) {
-      $("#username-error").text("Username cannot contain numbers");
+      $("#username-error").text("Username cannot start with a number");
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      $("#username-error").text("Username can only contain letters, numbers, and underscores");
       return;
     }
     $.ajax({
@@ -98,16 +103,16 @@ $(document).ready(function () {
     checkPassword();
   });
 
-  $("button[name='signup']").on("click", function (event) {
-    // Check if there are any error messages present
-    if (
-      $("#username-error").text() !== "" ||
-      $("#email-error").text() !== "" ||
-      $("#password-error").text() !== "" ||
-      $("#confirmPassword-error").text() !== ""
-    ) {
-      event.preventDefault(); // Prevent form submission
-      alert("Please fix the errors before registering.");
-    }
-  });
+      // $("button[name='signup']").on("click", function (event) {
+      //   // Check if there are any error messages present
+      //   if (
+      //     $("#username-error").text() !== "" ||
+      //     $("#email-error").text() !== "" ||
+      //     $("#password-error").text() !== "" ||
+      //     $("#confirmPassword-error").text() !== ""
+      //   ) {
+      //     event.preventDefault(); // Prevent form submission
+      //     alert("Please fix the errors before registering.");
+      //   }
+      // });
 });

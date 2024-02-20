@@ -47,7 +47,16 @@ if (isset($_GET['search'])) {
 
     ?>
     <div class="nav-container">
-        <div class="logo"><a href="./userindex.php">RMUTI</a></div>
+        <div class="logo">
+            <?php
+            // เช็คว่ามาจากหน้า userindex.php หรือไม่
+            if (strpos($_SERVER['HTTP_REFERER'], 'userindex.php') !== false) {
+                echo '<a href="./userindex.php"><i class="fas fa-backward"></i></a>';
+            } else {
+                echo '<a href="./profileuser.php"><i class="fas fa-backward"></i></a>';
+            }
+            ?>
+        </div>
         <div>
             <form action="search.php" method="get" class="clear-input-container">
                 <input class="clear-input" type="text" name="search"> <!-- Corrected name attribute -->

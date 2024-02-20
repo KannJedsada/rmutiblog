@@ -29,7 +29,6 @@ if (isset($_POST['editpost'])) {
 
         if (in_array($fileActExt, $allow)) {
             if ($pimg['size'] > 0 && $pimg['error'] == 0) {
-                // Perform the image upload and SQL update within this block
                 move_uploaded_file($pimg['tmp_name'], $filePath);
                 $sql = $conn->prepare("UPDATE posts SET post_title = :pTitle, post_description = :pdes, post_img = :pimg WHERE post_id = :editPostId");
                 $sql->bindParam(":pTitle", $pTitle);

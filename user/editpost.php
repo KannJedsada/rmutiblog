@@ -33,18 +33,23 @@ if (isset($_POST['editpost'])) {
         if (in_array($fileActExt, $allow)) {
             if ($pimg['size'] > 0 && $pimg['error'] == 0) {
                 move_uploaded_file($pimg['tmp_name'], $filePath);
+                $sql = $conn->prepare("UPDATE posts SET post_title = :pTitle, post_description = :pdes, post_img = :pimg WHERE post_id = :editPostId");
+                $sql->bindParam(":pTitle", $pTitle);
+                $sql->bindParam(":pdes", $pdes);
+                $sql->bindParam(":pimg", $fileNew);
+                $sql->bindParam(":editPostId", $editPostId);
+                $sql->execute();
             }
         }
     } else {
-        $fileNew = $pimg2;
+        $sql1 = $conn->prepare("UPDATE posts SET post_title = :pTitle, post_description = :pdes WHERE post_id = :editPostId");
+        $sql1->bindParam(":pTitle", $pTitle);
+        $sql1->bindParam(":pdes", $pdes);
+        $sql1->bindParam(":editPostId", $editPostId);
+        $sql1->execute();
     }
 
-    $sql = $conn->prepare("UPDATE posts SET post_title = :pTitle, post_description = :pdes, post_img = :pimg WHERE post_id = :editPostId");
-    $sql->bindParam(":pTitle", $pTitle);
-    $sql->bindParam(":pdes", $pdes);
-    $sql->bindParam(":pimg", $fileNew);
-    $sql->bindParam(":editPostId", $editPostId);
-    $sql->execute();
+
 
     if ($sql) {
         // Delete the old image file if it exists
@@ -53,15 +58,13 @@ if (isset($_POST['editpost'])) {
         }
 
         // Redirect based on the referring page
-        if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], "profileuser.php") !== false) {
-            header("location: profileuser.php");
-            exit();
-        } else {
-            header("location: userindex.php");
-            exit();
-        }
+
+    }
+    if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], "profileuser.php") !== false) {
+        header("location: profileuser.php");
+        exit();
     } else {
-        $_SESSION['error'] = "Data has not been updated successfully";
         header("location: userindex.php");
+        exit();
     }
 }
