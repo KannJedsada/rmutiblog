@@ -28,11 +28,11 @@ RMUTI Blog is a mini-project for the Database Management course. This web blog a
 ## Installation
 1. Clone the repository:
    ```sh
-   git clone https://github.com/your-username/rmuti-blog.git
+   git clone https://github.com/KannJedsada/rmutiblog.git
    ```
 2. Navigate to the project directory:
    ```sh
-   cd rmuti-blog
+   cd rmutiblog
    ```
 3. Set up the database:
    - Import `database.sql` into MySQL
