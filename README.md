@@ -35,7 +35,7 @@ RMUTI Blog is a mini-project for the Database Management course. This web blog a
    cd rmutiblog
    ```
 3. Set up the database:
-   - Import `database.sql` into MySQL
+   - Import `rmutib.sql` into MySQL
    - Configure `config.php` with database credentials
 
 4. Start a local server (e.g., XAMPP, MAMP, or built-in PHP server):
